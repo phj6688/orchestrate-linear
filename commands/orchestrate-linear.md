@@ -145,16 +145,24 @@ On **approve + green**:
    reviewed, green branch in place and emit
    `needs input: <ISSUE> ready but held for manual merge — <one-line reason>`.
    Continue with the rest of the backlog.
-1. If `auto-merge: yes` → **merge** the feature branch into the integration
-   branch (`dev` if the repo uses it, else its conventional PR target). **Serialize
-   all merges** through yourself — one at a time, even though implementation ran
-   in parallel. Two issues that touched the same hotspot file must never merge
-   without re-running the parity/contract test on the second.
+1. If `auto-merge: yes` → **push the feature branch and open a PR** into the
+   integration branch (`dev` if the repo uses it, else its conventional PR
+   target), then **merge the PR**. The PR body MUST reference the issue so the
+   GitHub→Linear integration links it and advances its status on its own: the
+   branch already carries the issue ID, and add a magic word in the body,
+   `Closes <ISSUE>` if merging to the integration branch should complete the
+   issue, or a contributing word like `Part of <ISSUE>` if that branch is a
+   holding stage before a later release. **Serialize all merges** through
+   yourself, one at a time, even though implementation ran in parallel. Two
+   issues that touched the same hotspot file must never merge without
+   re-running the parity/contract test on the second.
 2. If the integration branch moved since the branch forked: rebase the branch and
    **re-run Phase 3 verification** before merging. On merge conflict, stop that
    issue and emit `needs input` with the conflicting files; never force-merge.
-3. Move the Linear issue forward (`save_issue`) and post a comment (`save_comment`)
-   with the summary + an artifact reference.
+3. Let the GitHub→Linear integration advance the issue's status from the merged
+   PR; do **not** set status with `save_issue`. Post a summary comment
+   (`save_comment`) with an artifact reference. If the repo has no
+   GitHub→Linear integration, fall back to advancing status with `save_issue`.
 
 After the wave's issues are merged, **re-plan if needed** (completed work may
 change remaining issues' file-sets), then start the next wave.
