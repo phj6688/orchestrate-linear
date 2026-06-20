@@ -78,12 +78,18 @@ Each implementation subagent's prompt must instruct it to:
 4. run verification (Phase 3 rules) and **save artifacts** under
    `$CLAUDE_JOB_DIR/orchestrate/<ISSUE>/` (screenshots, video, logs) — or a temp
    dir if that env var is unset,
-5. commit using the repo's commit convention,
-6. return a structured summary: branch, commits, files changed, verification
-   result, and artifact paths.
+5. commit using the repo's commit convention — the issue is not done until the
+   work is committed,
+6. return a structured summary: branch, **head commit SHA**, files changed,
+   verification result, and artifact paths.
 
-If an agent crashes or returns no branch, mark the issue **failed**, leave Linear
-untouched, continue the wave, and report it at the end.
+**Verify the commit landed — do not trust the subagent's self-report.** Before
+treating an issue as built, run `git rev-list --count <integration-branch>..<branch>`.
+If it is `0` (no branch, or a branch carrying no new commits) the issue is
+**failed** even when the summary claims success — the common silent failure is an
+agent that edits files, runs verification, and writes a summary but never commits.
+On failure (this, a crash, or no branch returned): mark the issue **failed**, leave
+Linear untouched, continue the wave, and report it at the end.
 
 ---
 
