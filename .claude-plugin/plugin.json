@@ -1,7 +1,7 @@
 {
   "name": "orchestrate-linear",
   "description": "Orchestrate a Linear backlog: a thin orchestrator fans out a planner plus per-issue implement/review/verify subagents, loops each issue until reviewer-approved and green, then auto-merges to the integration branch.",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "author": {
     "name": "Peyman",
     "email": "peyman.h.j@gmail.com"
