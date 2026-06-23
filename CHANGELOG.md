@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.2
+
+- Phase 2 review now dispatches a read-only `code-reviewer` subagent (Read/Grep/Glob/Bash,
+  no Write/Edit/MultiEdit) instead of `general-purpose`, so the reviewer cannot edit the
+  code it grades. Requires the global `code-reviewer` agent (claude-homelab `~/.claude/agents/`). (HLB-486)
+
 ## 1.1.1
 
 - Orchestrator now independently verifies a commit landed on each issue's branch
