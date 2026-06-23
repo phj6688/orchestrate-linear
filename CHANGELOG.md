@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.3
+
+- Per-issue held-out behavioural probe. Before each issue is implemented, a
+  write-only `heldout-probe` subagent generates a black-box pytest from the issue
+  spec alone, stored outside the implementer's worktree so the builder never sees
+  it (Phase 1). Phase 3 runs it against the built code as a mandatory, un-gameable
+  gate; a non-zero exit fails verification. Phase 5 commits the probe into
+  `tests/heldout/` after green, where the `block-heldout-write` hook freezes it.
+  Requires the global `heldout-probe` agent and hook (claude-homelab). (HLB-487)
+
 ## 1.1.2
 
 - Phase 2 review now dispatches a read-only `code-reviewer` subagent (Read/Grep/Glob/Bash,

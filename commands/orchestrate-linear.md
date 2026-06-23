@@ -65,6 +65,15 @@ State the wave plan in your own text before executing.
 
 ## Phase 1 — Execute (per wave, parallel, isolated)
 
+**First, per issue: freeze the held-out probe.** Before any implementation agent
+touches an issue, dispatch the **`heldout-probe`** subagent (write-only) with ONLY
+the issue's text (title, requirements, and acceptance criteria from `get_issue`)
+and the target path `${CLAUDE_JOB_DIR:-/tmp}/orchestrate/<ISSUE>/heldout.py`. It
+writes a black-box pytest from the spec alone. This file lives **outside** the
+implementer's worktree, so the implementer never sees it and cannot fit code to
+it. Do **not** pass the probe, its content, or its path to the implementation
+subagent. Phase 3 runs it as the un-gameable gate.
+
 For the current wave, fan out **one `general-purpose` implementation subagent per
 issue, each with `isolation: "worktree"`** (mandatory — disjoint file-sets do not
 prevent git index contention or protect the user's tree). **Concurrency cap: 3**;
@@ -126,6 +135,11 @@ Choose the path from the issue's labels and the change:
   `*.peyman.io` host behind the tunnel) MUST return 302/401/403 to a request
   with a spoofed external client IP. Anything else = gate open = **hard fail,
   never merge.**
+- **Held-out probe (mandatory, every issue):** run the frozen probe against the
+  built code from the issue's worktree — `cd <worktree> && pytest
+  "${CLAUDE_JOB_DIR:-/tmp}/orchestrate/<ISSUE>/heldout.py"`. A non-zero exit is a
+  verification **fail**: the build does not satisfy the spec the builder never
+  saw. This is the un-gameable accuracy gate; never skip it.
 
 Any non-zero check, missing screenshot evidence, or open security gate =
 verification **fail**.
@@ -148,6 +162,12 @@ Do not block the rest of the backlog; move on to other issues.
 ## Phase 5 — Merge & advance
 
 On **approve + green**:
+
+**First, preserve the held-out probe:** copy the frozen probe to
+`tests/heldout/issue-<ISSUE>.py` on the branch and commit it
+(`git add tests/heldout/issue-<ISSUE>.py`), so it travels with the PR as a
+regression test; the `block-heldout-write` hook protects it from later edits.
+
 0. **Check the planner's `auto-merge` tag.** If `hold`, do NOT merge: leave the
    reviewed, green branch in place and emit
    `needs input: <ISSUE> ready but held for manual merge — <one-line reason>`.
