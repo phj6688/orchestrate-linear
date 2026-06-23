@@ -95,8 +95,9 @@ Linear untouched, continue the wave, and report it at the end.
 
 ## Phase 2 — Review (per issue)
 
-When an implementation agent finishes, dispatch a **code-review subagent**
-(`general-purpose`) instructed to invoke the **`requesting-code-review`** skill
+When an implementation agent finishes, dispatch a read-only **`code-reviewer`**
+subagent (tools: Read/Grep/Glob/Bash, no Write/Edit/MultiEdit, so it cannot edit
+the code it grades) instructed to invoke the **`requesting-code-review`** skill
 (or the repo's `/code-review` command) against that issue's branch diff
 (`git diff <integration-branch>...<branch>`). It returns one of:
 - **approve**, or
