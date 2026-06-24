@@ -137,7 +137,7 @@ Choose the path from the issue's labels and the change:
   in the datastore.
 - **Security gate:** any route you newly exposed to the public internet (e.g. a
   `*.peyman.io` host behind the tunnel) MUST return 302/401/403 to a **plain
-  anonymous request** (`curl -s -o /dev/null -w '%{http_code}' https://<app>.peyman.io`,
+  anonymous request** (`curl -s --connect-timeout 5 --max-time 15 -o /dev/null -w '%{http_code}' https://<app>.peyman.io`,
   no spoofed headers). Do **not** send a spoofed `CF-Connecting-IP`: Cloudflare
   sets that at its edge and a forged one only trips the WAF, masking whether the
   real auth gate holds. Anything other than 302/401/403 = gate open = **hard fail,
