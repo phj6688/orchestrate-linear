@@ -66,10 +66,14 @@ State the wave plan in your own text before executing.
 ## Phase 1 — Execute (per wave, parallel, isolated)
 
 **First, per issue: freeze the held-out probe.** Before any implementation agent
-touches an issue, dispatch the **`heldout-probe`** subagent (write-only) with ONLY
-the issue's text (title, requirements, and acceptance criteria from `get_issue`)
-and the target path `${CLAUDE_JOB_DIR:-/tmp}/orchestrate/<ISSUE>/heldout.py`. It
-writes a black-box pytest from the spec alone. This file lives **outside** the
+touches an issue, clear any stale staging from an earlier run
+(`rm -rf "${CLAUDE_JOB_DIR:-/tmp}/orchestrate/<ISSUE>/"`) so a retried or
+re-invoked issue regenerates the probe instead of reusing an older one (the
+`/tmp` fallback path persists across sessions and is not run-scoped). Then dispatch
+the **`heldout-probe`** subagent (write-only) with ONLY the issue's text (title,
+requirements, and acceptance criteria from `get_issue`) and the target path
+`${CLAUDE_JOB_DIR:-/tmp}/orchestrate/<ISSUE>/heldout.py`. It writes a black-box
+pytest from the spec alone. This file lives **outside** the
 implementer's worktree, so the implementer never sees it and cannot fit code to
 it. Do **not** pass the probe, its content, or its path to the implementation
 subagent. Phase 3 runs it as the un-gameable gate.
@@ -132,8 +136,11 @@ Choose the path from the issue's labels and the change:
   service logs for the exercised code path, and assert the expected side-effect
   in the datastore.
 - **Security gate:** any route you newly exposed to the public internet (e.g. a
-  `*.peyman.io` host behind the tunnel) MUST return 302/401/403 to a request
-  with a spoofed external client IP. Anything else = gate open = **hard fail,
+  `*.peyman.io` host behind the tunnel) MUST return 302/401/403 to a **plain
+  anonymous request** (`curl -s -o /dev/null -w '%{http_code}' https://<app>.peyman.io`,
+  no spoofed headers). Do **not** send a spoofed `CF-Connecting-IP`: Cloudflare
+  sets that at its edge and a forged one only trips the WAF, masking whether the
+  real auth gate holds. Anything other than 302/401/403 = gate open = **hard fail,
   never merge.**
 - **Held-out probe (mandatory, every issue):** run the frozen probe against the
   built code from the issue's worktree — `cd <worktree> && pytest
@@ -174,7 +181,14 @@ regression test; the `block-heldout-write` hook protects it from later edits.
    Continue with the rest of the backlog.
 1. If `auto-merge: yes` → **push the feature branch and open a PR** into the
    integration branch (`dev` if the repo uses it, else its conventional PR
-   target), then **merge the PR**. The PR body MUST reference the issue so the
+   target). **For a gated homelab project** (one with an entry in
+   `~/.config/homelab/verify-target.json`), immediately before merging run
+   `~/.claude/gate/verify.sh` **from the issue's worktree** and issue the merge
+   **from that same worktree**, so the sha-pinned merge gate
+   (`block-unverified-merge.sh`, which refuses the merge unless the verify.sh
+   artifact's `verified_sha == HEAD`) passes; verify and merge must run from the
+   same checkout or the gate will block on a mismatched HEAD. Then **merge the
+   PR**. The PR body MUST reference the issue so the
    GitHub→Linear integration links it and advances its status on its own: the
    branch already carries the issue ID, and add a magic word in the body,
    `Closes <ISSUE>` if merging to the integration branch should complete the

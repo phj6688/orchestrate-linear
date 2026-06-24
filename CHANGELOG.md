@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.1.4
+
+- Wire Phase 5 to the sha-pinned merge gate (`block-unverified-merge.sh`,
+  claude-homelab): for a gated homelab project, run `~/.claude/gate/verify.sh`
+  from the issue's worktree immediately before merging and merge from that same
+  worktree, so the gate's `verified_sha == HEAD` check passes instead of
+  deadlocking the loop's own merge. (HLB-488)
+- Phase 3 security gate now probes the public route with a plain anonymous
+  request, not a spoofed `CF-Connecting-IP`. A forged client IP only trips
+  Cloudflare's WAF and masks whether the real auth gate holds. (HLB-488)
+- Phase 1 clears the per-issue probe staging dir before generating, so a retried
+  or re-invoked issue never runs a stale held-out probe left in the `/tmp`
+  fallback by an earlier run.
+
 ## 1.1.3
 
 - Per-issue held-out behavioural probe. Before each issue is implemented, a
